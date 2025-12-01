@@ -89,11 +89,23 @@ class Task {
     } else {
       status = SyncStatus.synced;
     }
+    // completed pode ser 1/0, true/false ou string
+    bool completedValue;
+    final rawCompleted = map['completed'];
+    if (rawCompleted is bool) {
+      completedValue = rawCompleted;
+    } else if (rawCompleted is int) {
+      completedValue = rawCompleted == 1;
+    } else if (rawCompleted is String) {
+      completedValue = rawCompleted == '1' || rawCompleted.toLowerCase() == 'true';
+    } else {
+      completedValue = false;
+    }
     return Task(
       id: map['id'],
       title: map['title'],
       description: map['description'],
-      completed: map['completed'] == 1,
+      completed: completedValue,
       priority: map['priority'],
       userId: map['userId'],
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
@@ -123,11 +135,23 @@ class Task {
 
   /// Criar Task a partir de JSON
   factory Task.fromJson(Map<String, dynamic> json) {
+    // completed pode ser bool, int, string
+    bool completedValue;
+    final rawCompleted = json['completed'];
+    if (rawCompleted is bool) {
+      completedValue = rawCompleted;
+    } else if (rawCompleted is int) {
+      completedValue = rawCompleted == 1;
+    } else if (rawCompleted is String) {
+      completedValue = rawCompleted == '1' || rawCompleted.toLowerCase() == 'true';
+    } else {
+      completedValue = false;
+    }
     return Task(
       id: json['id'],
       title: json['title'],
       description: json['description'] ?? '',
-      completed: json['completed'] ?? false,
+      completed: completedValue,
       priority: json['priority'] ?? 'medium',
       userId: json['userId'] ?? json['user_id'] ?? 'user1',
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt']),

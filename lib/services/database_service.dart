@@ -79,11 +79,13 @@ class DatabaseService {
   /// Inserir ou atualizar tarefa
   Future<Task> upsertTask(Task task) async {
     final db = await database;
+    print('[DB] Salvando tarefa: id=${task.id}, title=${task.title}, completed=${task.completed}, userId=${task.userId}, version=${task.version}');
     await db.insert(
       'tasks',
       task.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    print('[DB] Tarefa salva com sucesso!');
     return task;
   }
 
@@ -105,8 +107,6 @@ class DatabaseService {
     final db = await database;
     final maps = await db.query(
       'tasks',
-      where: 'userId = ?',
-      whereArgs: [userId],
       orderBy: 'updatedAt DESC',
     );
 

@@ -22,21 +22,32 @@ class ApiService {
         },
       );
 
+      print('[ApiService] Fazendo GET para: $uri');
       final response = await http.get(uri).timeout(
         const Duration(seconds: 10),
       );
+      print('[ApiService] Status code: ${response.statusCode}');
+      print('[ApiService] Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return {
-          'success': true,
-          'tasks': (data['tasks'] as List)
+        try {
+          final data = json.decode(response.body);
+          final tasksList = (data['tasks'] as List)
               .map((json) => Task.fromJson(json))
-              .toList(),
-          'lastSync': data['lastSync'],
-          'serverTime': data['serverTime'],
-        };
+              .toList();
+          print('[ApiService] Tarefas convertidas: ${tasksList.length}');
+          return {
+            'success': true,
+            'tasks': tasksList,
+            'lastSync': data['lastSync'],
+            'serverTime': data['serverTime'],
+          };
+        } catch (e) {
+          print('[ApiService] Erro ao decodificar JSON: $e');
+          throw Exception('Erro ao decodificar resposta do backend');
+        }
       } else {
+        print('[ApiService] Erro ao buscar tarefas: ${response.statusCode}');
         throw Exception('Erro ao buscar tarefas: ${response.statusCode}');
       }
     } catch (e) {

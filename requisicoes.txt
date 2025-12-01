@@ -8,10 +8,10 @@ node src/index.js
 curl -X GET http://localhost:3000/health
 
 ## 2. Listar Tarefas (GET)
-curl -X GET "http://localhost:3000/tasks?userId=user1&modifiedSince=0"
+curl -X GET "http://localhost:3000/api/tasks?userId=user1&modifiedSince=0"
 
 ## 3. Criar Tarefa (POST)
-curl -X POST http://localhost:3000/tasks \
+curl -X POST http://localhost:3000/api/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Minha tarefa offline",
@@ -23,7 +23,7 @@ curl -X POST http://localhost:3000/tasks \
   }'
 
 ## 4. Atualizar Tarefa (PUT)
-curl -X PUT http://localhost:3000/tasks/<ID_DA_TAREFA> \
+curl -X PUT http://localhost:3000/api/tasks/9c5e1036-e85f-4177-8e6b-fab9b747b4c0 \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Tarefa atualizada",
@@ -32,38 +32,4 @@ curl -X PUT http://localhost:3000/tasks/<ID_DA_TAREFA> \
   }'
 
 ## 5. Deletar Tarefa (DELETE)
-curl -X DELETE "http://localhost:3000/tasks/<ID_DA_TAREFA>?version=1"
-
-## 6. Sincronização em Lote (Offline-First)
-curl -X POST http://localhost:3000/sync/batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "operations": [
-      {
-        "type": "create",
-        "id": "op1",
-        "data": {
-          "title": "Tarefa offline",
-          "userId": "user1"
-        }
-      },
-      {
-        "type": "update",
-        "id": "op2",
-        "taskId": "<ID_DA_TAREFA>",
-        "data": {
-          "completed": true,
-          "version": 2
-        }
-      },
-      {
-        "type": "delete",
-        "id": "op3",
-        "taskId": "<ID_DA_TAREFA>",
-        "data": {
-          "version": 2
-        }
-      }
-    ]
-  }'
-
+curl -X DELETE "http://localhost:3000/api/tasks/<ID_DA_TAREFA>?version=1"

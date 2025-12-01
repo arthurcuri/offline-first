@@ -34,11 +34,13 @@ class TaskProvider with ChangeNotifier {
   Future<void> initialize() async {
     await loadTasks();
     
+    // Ao iniciar, sempre faz um pull completo do backend e salva no banco local
+    await _syncService.sync(fullSync: true);
+    await loadTasks();
     _syncService.startAutoSync();
-    
     _syncService.syncStatusStream.listen((event) {
-        if (event.type == SyncEventType.completed) {
-          loadTasks();
+      if (event.type == SyncEventType.completed) {
+        loadTasks();
       }
     });
   }
@@ -53,6 +55,7 @@ class TaskProvider with ChangeNotifier {
       notifyListeners();
 
       _tasks = await _db.getAllTasks();
+      print('[TaskProvider] Tarefas carregadas do banco local: ${_tasks.length}');
       
       _isLoading = false;
       notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task.dart';
@@ -100,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: colorScheme.background,
               child: Consumer<TaskProvider>(
                 builder: (context, taskProvider, child) {
+                  print('[HomeScreen] Tarefas recebidas: ${taskProvider.tasks.length}');
                   if (taskProvider.isLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -122,9 +124,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }
 
-                  final tasks = taskProvider.tasks;
+                  final incompleteTasks = taskProvider.pendingTasks;
+                  final completedTasks = taskProvider.completedTasks;
 
-                  if (tasks.isEmpty) {
+                  print('[HomeScreen] Incompletas: ${incompleteTasks.length}, Completas: ${completedTasks.length}');
+
+                  if (incompleteTasks.isEmpty && completedTasks.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -152,14 +157,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   return RefreshIndicator(
                     color: colorScheme.primary,
                     onRefresh: () => taskProvider.sync(),
-                    child: ListView.separated(
-                      itemCount: tasks.length,
+                    child: ListView(
                       padding: const EdgeInsets.all(16),
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final task = tasks[index];
-                        return _buildTaskCard(context, task, taskProvider);
-                      },
+                      children: [
+                        if (incompleteTasks.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              'Tarefas Incompletas',
+                              style: titleStyle?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                          ),
+                          ...List.generate(
+                            incompleteTasks.length,
+                            (index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildTaskCard(context, incompleteTasks[index], taskProvider),
+                            ),
+                          ),
+                        ],
+                        if (completedTasks.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              'Tarefas Completas',
+                              style: titleStyle?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                          ),
+                          ...List.generate(
+                            completedTasks.length,
+                            (index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildTaskCard(context, completedTasks[index], taskProvider),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   );
                 },
@@ -232,56 +265,78 @@ class _HomeScreenState extends State<HomeScreen> {
           border: Border(
             left: BorderSide(
               color: colorScheme.primary,
-              width: 4, // barra ainda mais fina
+              width: 4,
             ),
           ),
         ),
-        child: ListTile(
-          leading: SizedBox(
-            width: 32,
-            child: Center(child: syncIcon),
-          ),
-          title: Text(
-            task.title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  decoration:
-                      task.completed ? TextDecoration.lineThrough : null,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Slidable(
+          key: ValueKey(task.id),
+          startActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            extentRatio: 0.25,
             children: [
-              if (task.description.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    task.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+              SlidableAction(
+                onPressed: (_) => provider.toggleCompleted(task),
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                icon: Icons.check,
+                label: 'Concluir',
+              ),
+            ],
+          ),
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            extentRatio: 0.5,
+            children: [
+              SlidableAction(
+                onPressed: (_) => _navigateToTaskForm(task: task),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                icon: Icons.edit,
+                label: 'Editar',
+              ),
+              SlidableAction(
+                onPressed: (_) => _confirmDelete(task, provider),
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                icon: Icons.delete,
+                label: 'Apagar',
+              ),
+            ],
+          ),
+          child: ListTile(
+            leading: SizedBox(
+              width: 32,
+              child: Center(child: syncIcon),
+            ),
+            title: Text(
+              task.title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    decoration:
+                        task.completed ? TextDecoration.lineThrough : null,
+                    fontWeight: FontWeight.w600,
                   ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (task.description.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      task.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildPriorityBadge(context, task.priority),
+                  ],
                 ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildPriorityBadge(context, task.priority),
-                  // Removido: badge de status de sincronização
-                ],
-              ),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _navigateToTaskForm(task: task),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => _confirmDelete(task, provider),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

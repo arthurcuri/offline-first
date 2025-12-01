@@ -25,7 +25,7 @@ class SyncService {
   // ==================== SINCRONIZAÇÃO PRINCIPAL ====================
 
   /// Executar sincronização completa
-  Future<SyncResult> sync() async {
+  Future<SyncResult> sync({bool fullSync = false}) async {
     if (_isSyncing) {
       return SyncResult(
         success: false,
@@ -42,7 +42,7 @@ class SyncService {
     _notifyStatus(SyncEvent.syncStarted());
     try {
       final pushResult = await _pushPendingOperations();
-      final pullResult = await _pullFromServer();
+      final pullResult = await _pullFromServer(fullSync: fullSync);
       await _db.setMetadata(
         'lastSyncTimestamp',
         DateTime.now().millisecondsSinceEpoch.toString(),
@@ -184,32 +184,34 @@ class SyncService {
   // ==================== PULL (Servidor → Cliente) ====================
 
   /// Buscar atualizações do servidor
-  Future<int> _pullFromServer() async {
+  Future<int> _pullFromServer({bool fullSync = false}) async {
     final lastSyncStr = await _db.getMetadata('lastSyncTimestamp');
-    final lastSync = lastSyncStr != null ? int.parse(lastSyncStr) : null;
+    // Se nunca sincronizou, busca tudo (modifiedSince=0)
+    final lastSync = lastSyncStr != null ? int.parse(lastSyncStr) : 0;
 
-    final result = await _api.getTasks(modifiedSince: lastSync);
+    final result = (lastSync == 0 || fullSync)
+        ? await _api.getTasks()
+        : await _api.getTasks(modifiedSince: lastSync);
     final serverTasks = result['tasks'] as List<Task>;
 
     print('Recebidas ${serverTasks.length} tarefas do servidor');
+    for (final t in serverTasks) {
+      print('Tarefa recebida: id=${t.id}, title=${t.title}, userId=${t.userId}, completed=${t.completed}, version=${t.version}, updatedAt=${t.updatedAt}');
+    }
 
-    for (final serverTask in serverTasks) {
-      final localTask = await _db.getTask(serverTask.id);
-
-      if (localTask == null) {
-        // Nova tarefa do servidor
-        await _db.upsertTask(
-          serverTask.copyWith(syncStatus: SyncStatus.synced),
-        );
-      } else if (localTask.syncStatus == SyncStatus.synced) {
-        // Atualização do servidor (sem modificações locais)
-        await _db.upsertTask(
-          serverTask.copyWith(syncStatus: SyncStatus.synced),
-        );
-      } else {
-        // Possível conflito - resolver
-        await _resolveConflict(localTask, serverTask);
+    // Só remove todas as tarefas locais se for um pull completo
+    if (lastSync == 0 || fullSync) {
+      final localTasks = await _db.getAllTasks(userId: _api.userId);
+      for (final localTask in localTasks) {
+        await _db.deleteTask(localTask.id);
       }
+    }
+
+    // Insere todas as tarefas do backend como sincronizadas
+    for (final serverTask in serverTasks) {
+      await _db.upsertTask(
+        serverTask.copyWith(syncStatus: SyncStatus.synced),
+      );
     }
 
     return serverTasks.length;
