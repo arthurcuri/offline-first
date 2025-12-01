@@ -1,0 +1,12 @@
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/task_manager_offline
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/icudtl.dat
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/lib/libflutter_linux_gtk.so
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/AssetManifest.json
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/fonts/MaterialIcons-Regular.otf
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/NOTICES.Z
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/version.json
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/shaders/ink_sparkle.frag
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/NativeAssetsManifest.json
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/AssetManifest.bin
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/FontManifest.json
+/home/ak/Downloads/off-line-first/build/linux/x64/debug/bundle/data/flutter_assets/kernel_blob.bin

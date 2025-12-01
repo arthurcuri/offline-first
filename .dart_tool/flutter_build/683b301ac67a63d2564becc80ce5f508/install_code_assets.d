@@ -1,0 +1,1 @@
+ /home/ak/Downloads/off-line-first/.dart_tool/flutter_build/683b301ac67a63d2564becc80ce5f508/native_assets.json: 
