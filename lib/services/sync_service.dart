@@ -207,11 +207,34 @@ class SyncService {
       }
     }
 
-    // Insere todas as tarefas do backend como sincronizadas
+    // FILA LWW: agrupa operações por id e aplica só a última
+    final Map<String, Task> lwwQueue = {};
     for (final serverTask in serverTasks) {
-      await _db.upsertTask(
-        serverTask.copyWith(syncStatus: SyncStatus.synced),
-      );
+      final existing = lwwQueue[serverTask.id];
+      if (existing == null ||
+          serverTask.version > existing.version ||
+          (serverTask.version == existing.version && serverTask.updatedAt.isAfter(existing.updatedAt))) {
+        lwwQueue[serverTask.id] = serverTask;
+      }
+    }
+
+    for (final serverTask in lwwQueue.values) {
+      final localTask = await _db.getTask(serverTask.id);
+      bool shouldUpdate = false;
+      if (localTask == null) {
+        shouldUpdate = true;
+      } else {
+        if (serverTask.version > localTask.version) {
+          shouldUpdate = true;
+        } else if (serverTask.version == localTask.version && serverTask.updatedAt.isAfter(localTask.updatedAt)) {
+          shouldUpdate = true;
+        }
+      }
+      if (shouldUpdate) {
+        await _db.upsertTask(
+          serverTask.copyWith(syncStatus: SyncStatus.synced),
+        );
+      }
     }
 
     return serverTasks.length;

@@ -1,27 +1,16 @@
 {
   "tasks": [
     {
-      "id": "be1438ce-328f-49a8-80eb-71931fd47912",
-      "title": "312",
-      "description": "312",
-      "completed": false,
-      "priority": "medium",
+      "id": "7a159419-31e1-4f05-abf0-790e88cc52d7",
+      "title": "Novo título",
+      "description": "...",
+      "completed": true,
+      "priority": "high",
       "userId": "user1",
-      "createdAt": 1764552193405,
-      "updatedAt": 1764554903568,
-      "version": 3
-    },
-    {
-      "id": "a7ba5e31-0ea2-4f86-bcad-aaa2235638e5",
-      "title": "123333",
-      "description": "123",
-      "completed": false,
-      "priority": "medium",
-      "userId": "user1",
-      "createdAt": 1764552404099,
-      "updatedAt": 1764554935469,
-      "version": 4
+      "createdAt": 1764556184367,
+      "updatedAt": 1764556232873,
+      "version": 2
     }
   ],
-  "lastTaskUpdate": 1764554935469
+  "lastTaskUpdate": 1764556232873
 }
