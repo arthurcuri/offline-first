@@ -11,13 +11,18 @@ const defaultData = {
 
 async function readData() {
   try {
+    console.log(`[LWW] [readData] Caminho absoluto: ${DB_PATH}`);
     const raw = await fs.readFile(DB_PATH, "utf-8");
+    console.log(`[LWW] [readData] Conteúdo lido (até 500 chars): ${raw.slice(0, 500)}...`);
     return JSON.parse(raw);
   } catch (error) {
     if (error.code === "ENOENT") {
+      console.warn(`[LWW] [readData] Arquivo não encontrado, criando novo: ${DB_PATH}`);
       await ensureDataFile();
       return { ...defaultData };
     }
+    console.error(`[LWW] [readData] Erro inesperado ao ler db.json:`, error);
+    if (error.stack) console.error(error.stack);
     throw error;
   }
 }
@@ -30,6 +35,9 @@ async function ensureDataFile() {
 async function writeData(data) {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2));
+  console.log(`[LWW] [writeData] db.json atualizado em ${new Date().toISOString()}`);
+  console.log(`[LWW] [writeData] Caminho absoluto: ${DB_PATH}`);
+  console.log(`[LWW] [writeData] Novo conteúdo (até 500 chars): ${JSON.stringify(data).slice(0, 500)}...`);
 }
 
 async function getAllTasks() {
@@ -49,7 +57,15 @@ async function upsertTask(task) {
   if (index === -1) {
     data.tasks.push(task);
   } else {
-    data.tasks[index] = task;
+    const existing = data.tasks[index];
+    // Só sobrescreve se version ou updatedAt do novo for maior
+    if (
+      (typeof task.version === 'number' && typeof existing.version === 'number' && task.version > existing.version) ||
+      (typeof task.version === 'number' && typeof existing.version === 'number' && task.version === existing.version && task.updatedAt > existing.updatedAt)
+    ) {
+      data.tasks[index] = task;
+    }
+    // Senão, mantém o existente
   }
 
   data.lastTaskUpdate = Math.max(
